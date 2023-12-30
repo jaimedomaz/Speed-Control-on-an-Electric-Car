@@ -1,0 +1,3 @@
+Pegar los archivos en la siguiente ruta:
+
+C:\Program Files (x86)\Labcenter Electronics\Proteus 8 Professional\LIBRARY

@@ -1,0 +1,1089 @@
+CCS PCH C Compiler, Version 4.114, 93467468               09-dic.-23 20:53
+
+               Filename: C:\Users\jaime\Documents\Proyecto_Jaime\proyecto.lst
+
+               ROM used: 3306 bytes (10%)
+                         Largest free fragment is 29462
+               RAM used: 16 (1%) at main() level
+                         42 (2%) worst case
+               Stack:    6 locations
+
+*
+0000:  GOTO   0C86
+.................... #include "18F4550.h"                //Incluimos la librería del PIC  y Habilitamos Conversion ADC=10 
+.................... //////// Standard Header file for the PIC18F4550 device //////////////// 
+.................... #device PIC18F4550 
+.................... #list 
+....................  
+.................... #DEVICE ADC=10 
+....................  
+.................... #include <ctype.h> 
+.................... //////////////////////////////////////////////////////////////////////////// 
+.................... ////        (C) Copyright 1996,2003 Custom Computer Services            //// 
+.................... //// This source code may only be used by licensed users of the CCS C   //// 
+.................... //// compiler.  This source code may only be distributed to other       //// 
+.................... //// licensed users of the CCS C compiler.  No other use, reproduction  //// 
+.................... //// or distribution is permitted without written permission.           //// 
+.................... //// Derivative programs created using this software in object code     //// 
+.................... //// form are not restricted in any way.                                //// 
+.................... //////////////////////////////////////////////////////////////////////////// 
+....................  
+.................... #ifndef _CTYPE 
+.................... #define _CTYPE 
+....................  
+.................... #define islower(x)  isamong(x,"abcdefghijklmnopqrstuvwxyz") 
+.................... #define isupper(x)  isamong(x,"ABCDEFGHIJKLMNOPQRSTUVWXYZ") 
+.................... #define isalnum(x)  isamong(x,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") 
+.................... #define isalpha(x)  isamong(x,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") 
+.................... #define isdigit(x)  isamong(x,"0123456789") 
+.................... #define isspace(x)  ((x)==' ') 
+.................... #define isxdigit(x) isamong(x,"0123456789ABCDEFabcdef") 
+.................... #define iscntrl(x)  ((x)<' ') 
+.................... #define isprint(x)  ((x)>=' ') 
+.................... #define isgraph(x)  ((x)>' ') 
+.................... #define ispunct(x)  (((x)>' ')&&!isalnum(x)) 
+....................  
+.................... #endif 
+....................  
+....................  
+....................  
+.................... #FUSES HS,NOPROTECT,NOLVP,NOWDT,NOPUT,BROWNOUT, WDT16384       //Configuración Perro Guardián para 1min. 
+....................  
+....................  
+.................... #use delay(clock=2000000)              //Frecuencia de trabajo de 2MHz y Configuración Puerto D (Sensores Ultrasonidos). 
+*
+00B8:  CLRF   FEA
+00BA:  MOVLW  24
+00BC:  MOVWF  FE9
+00BE:  MOVF   FEF,W
+00C0:  BZ    00D0
+00C2:  MOVLW  A5
+00C4:  MOVWF  00
+00C6:  DECFSZ 00,F
+00C8:  BRA    00C6
+00CA:  NOP   
+00CC:  DECFSZ FEF,F
+00CE:  BRA    00C2
+00D0:  RETLW  00
+.................... #USE standard_io(D) 
+....................  
+.................... #include "LCDeasy.c" 
+.................... ////----------------------------------------------------------------------------//// 
+.................... // 	Funciones para la gestion del display LCD de la EasyPIC3 
+.................... //	con el compilador de CCS. 
+.................... //	Es una adaptación del archivo LCD.c de CCS para las prácticas de la 
+.................... //	asignatura, y por tanto no distribuible a usuarios no autorizados. 
+.................... //------------------------------------------------------------------------------//// 
+....................  
+.................... //  lcd_init()   Inicializa el LCD: debe ser llamada antes que las otras funciones. 
+.................... // 
+.................... //  lcd_putc(c)  Visualiza c en la siguiente posición del display. 
+.................... //               Caracteres especiales de control: 
+.................... //                      \f  Borrar display 
+.................... //                      \n  Saltar a la segunda linea 
+.................... //                      \b  Retroceder una posición. 
+.................... // 
+.................... //  lcd_gotoxy(x,y) Selecciona la nueva posicion de escritura en el display. 
+.................... //                  (la esquina superior izquierda es 1,1) 
+.................... // 
+.................... //  lcd_getc(x,y)   Devuelve el caracter de la posicion x,y del display. 
+.................... //			(esta función no va en la EASYPIC3, pues R/W=0) 
+.................... // 
+.................... //  lcd_send_byte(rs,byte)	escribe byte en el registro de datos(con rs=1) o de 
+.................... //				instrucciones (con rs=0). 
+.................... //------------------------------------------------------------------------------// 
+.................... // Conexion del LCD con el PIC: 
+.................... //     RB0 -- 
+.................... //     RB1 -- 
+.................... //     RB2  rs 
+.................... //     RB3  Enable 
+.................... //     RB4  D4 
+.................... //     RB5  D5 
+.................... //     RB6  D6 
+.................... //     RB7  D7 
+.................... // 
+.................... // Los pines D0-D3 del LCD no se usan 
+.................... // El pin RB0 del PIC no se usa 
+.................... // El pin RB1 no está conectado en la tarjeta, 
+.................... // podría ser para r/w 
+....................  
+.................... // Un-comment the following define to use port B 
+.................... #define use_portb_lcd TRUE 		//LINEA DES-COMENTADA---------------- 
+....................  
+....................  
+.................... struct lcd_pin_map {                 // This structure is overlayed 
+....................            int unused : 2 ;	//MODIFICADA PARA EASYPIC-------------------- 
+.................... 	   //BOOLEAN rw;		//MODIFICADA PARA EASYPIC-------------------- 
+.................... 	   BOOLEAN rs;           // on to an I/O port to gain 
+....................            BOOLEAN ENABLE;            // access to the LCD pins. 
+....................            		           	// The bits are allocated from 
+....................            			          // low order up.  ENABLE will 
+....................            int     data : 4;         	// be pin B3------------------------- 
+....................         } lcd; 
+....................  
+....................  
+.................... #if defined(__PCH__) 
+.................... #if defined use_portb_lcd 
+....................    #byte lcd = 0xF81                   // This puts the entire structure 
+.................... #else 
+....................    #byte lcd = 0xF83                   // This puts the entire structure 
+.................... #endif 
+.................... #else 
+.................... #if defined use_portb_lcd 
+....................    #byte lcd = 6                  // on to port B (at address 6) 
+.................... #else 
+....................    #byte lcd = 8                 // on to port D (at address 8) 
+.................... #endif 
+.................... #endif 
+....................  
+.................... #if defined use_portb_lcd 
+....................    #define set_tris_lcd(x) set_tris_b(x) 
+.................... #else 
+....................    #define set_tris_lcd(x) set_tris_d(x) 
+.................... #endif 
+....................  
+....................  
+.................... #define lcd_type 2           // 0=5x7, 1=5x10, 2=2 lines 
+.................... #define lcd_line_two 0x40    // LCD RAM address for the second line 
+....................  
+....................  
+.................... BYTE const LCD_INIT_STRING[4] = {0x24 | (lcd_type << 2), 0xF, 1, 6}; 
+....................                              // These bytes need to be sent to the LCD 
+....................                              // to start it up. 
+....................  
+....................  
+....................                              // The following are used for setting 
+....................                              // the I/O port direction register. 
+....................  
+.................... struct lcd_pin_map const LCD_WRITE = {3,0,0,0}; // For write mode all pins are out 
+.................... struct lcd_pin_map const LCD_READ = {3,0,0,15}; // For read mode data pins are in 
+....................  
+....................  
+....................  
+.................... BYTE lcd_read_byte() { 
+....................       BYTE low,high; 
+....................       set_tris_lcd(LCD_READ); 
+....................       //////lcd.rw = 1; 
+....................       delay_cycles(1); 
+....................       lcd.enable = 1; 
+....................       delay_cycles(1); 
+....................       high = lcd.data; 
+....................       lcd.enable = 0; 
+....................       delay_cycles(1); 
+....................       lcd.enable = 1; 
+....................       delay_us(1); 
+....................       low = lcd.data; 
+....................       lcd.enable = 0; 
+....................       set_tris_lcd(LCD_WRITE); 
+....................       return( (high<<4) | low); 
+.................... } 
+....................  
+....................  
+.................... void lcd_send_nibble( BYTE n ) { 
+....................       lcd.data = n; 
+00D2:  SWAPF  25,W
+00D4:  ANDLW  F0
+00D6:  MOVWF  00
+00D8:  MOVLW  0F
+00DA:  ANDWF  F81,W
+00DC:  IORWF  00,W
+00DE:  MOVWF  F81
+....................       delay_cycles(1); 
+00E0:  NOP   
+....................       lcd.enable = 1; 
+00E2:  BSF    F81.3
+....................       delay_us(2); 
+00E4:  NOP   
+....................       lcd.enable = 0; 
+00E6:  BCF    F81.3
+.................... } 
+00E8:  RETLW  00
+....................  
+....................  
+.................... void lcd_send_byte( BYTE address, BYTE n ) { 
+....................  
+....................       lcd.rs = 0; 
+00EA:  BCF    F81.2
+....................       delay_us(3000); 
+00EC:  MOVLW  03
+00EE:  MOVWF  24
+00F0:  RCALL  00B8
+.................... //      while ( bit_test(lcd_read_byte(),7) ) ; 
+....................       lcd.rs = address; 
+00F2:  BTFSS  22.0
+00F4:  BCF    F81.2
+00F6:  BTFSC  22.0
+00F8:  BSF    F81.2
+....................       delay_cycles(1); 
+00FA:  NOP   
+....................       //////////lcd.rw = 0; 
+....................       delay_cycles(1); 
+00FC:  NOP   
+....................       lcd.enable = 0; 
+00FE:  BCF    F81.3
+....................       lcd_send_nibble(n >> 4); 
+0100:  SWAPF  23,W
+0102:  MOVWF  24
+0104:  MOVLW  0F
+0106:  ANDWF  24,F
+0108:  MOVFF  24,25
+010C:  RCALL  00D2
+....................       lcd_send_nibble(n & 0xf); 
+010E:  MOVF   23,W
+0110:  ANDLW  0F
+0112:  MOVWF  24
+0114:  MOVWF  25
+0116:  RCALL  00D2
+.................... } 
+0118:  RETLW  00
+....................  
+....................  
+.................... void lcd_init() { 
+....................     BYTE i; 
+....................     set_tris_lcd(LCD_WRITE); 
+011A:  MOVLW  03
+011C:  MOVWF  F93
+....................     lcd.rs = 0; 
+011E:  BCF    F81.2
+....................     /////lcd.rw = 0; 
+....................     lcd.enable = 0; 
+0120:  BCF    F81.3
+....................     delay_ms(50); 
+0122:  MOVLW  32
+0124:  MOVWF  24
+0126:  RCALL  00B8
+....................     //for(i=1;i<=3;++i) { 
+....................     //   lcd_send_nibble(3); 
+....................     //  delay_ms(5); 
+....................     //} 
+....................     lcd_send_nibble(2); 
+0128:  MOVLW  02
+012A:  MOVWF  25
+012C:  RCALL  00D2
+....................     delay_ms(5); 
+012E:  MOVLW  05
+0130:  MOVWF  24
+0132:  RCALL  00B8
+....................     for(i=0;i<=3;++i) 
+0134:  CLRF   10
+0136:  MOVF   10,W
+0138:  SUBLW  03
+013A:  BNC   0154
+....................        { lcd_send_byte(0,LCD_INIT_STRING[i]); 
+013C:  CLRF   03
+013E:  MOVF   10,W
+0140:  RCALL  0004
+0142:  MOVWF  11
+0144:  CLRF   22
+0146:  MOVWF  23
+0148:  RCALL  00EA
+....................         delay_ms(5); } 
+014A:  MOVLW  05
+014C:  MOVWF  24
+014E:  RCALL  00B8
+0150:  INCF   10,F
+0152:  BRA    0136
+.................... } 
+0154:  GOTO   0182 (RETURN)
+....................  
+....................  
+.................... void lcd_gotoxy( BYTE x, BYTE y) { 
+....................    BYTE address; 
+....................  
+....................    if(y!=1) 
+*
+0756:  DECFSZ 1F,W
+0758:  BRA    075C
+075A:  BRA    0762
+....................      address=lcd_line_two; 
+075C:  MOVLW  40
+075E:  MOVWF  20
+....................    else 
+0760:  BRA    0764
+....................      address=0; 
+0762:  CLRF   20
+....................    address+=x-1; 
+0764:  MOVLW  01
+0766:  SUBWF  1E,W
+0768:  ADDWF  20,F
+....................    lcd_send_byte(0,0x80|address); 
+076A:  MOVF   20,W
+076C:  IORLW  80
+076E:  MOVWF  21
+0770:  CLRF   22
+0772:  MOVWF  23
+0774:  RCALL  00EA
+.................... } 
+0776:  GOTO   07BC (RETURN)
+....................  
+.................... void lcd_putc( char c) { 
+....................    switch (c) { 
+077A:  MOVF   1D,W
+077C:  XORLW  0C
+077E:  BZ    078A
+0780:  XORLW  06
+0782:  BZ    079A
+0784:  XORLW  02
+0786:  BZ    07A6
+0788:  BRA    07B0
+....................      case '\f'   : lcd_send_byte(0,1); 
+078A:  CLRF   22
+078C:  MOVLW  01
+078E:  MOVWF  23
+0790:  RCALL  00EA
+....................                    delay_ms(2); 
+0792:  MOVLW  02
+0794:  MOVWF  24
+0796:  RCALL  00B8
+....................                                            break; 
+0798:  BRA    07BC
+....................      case '\n'   : lcd_gotoxy(1,2);        break; 
+079A:  MOVLW  01
+079C:  MOVWF  1E
+079E:  MOVLW  02
+07A0:  MOVWF  1F
+07A2:  BRA    0756
+07A4:  BRA    07BC
+....................      case '\b'   : lcd_send_byte(0,0x10);  break; 
+07A6:  CLRF   22
+07A8:  MOVLW  10
+07AA:  MOVWF  23
+07AC:  RCALL  00EA
+07AE:  BRA    07BC
+....................      default     : lcd_send_byte(1,c);     break; 
+07B0:  MOVLW  01
+07B2:  MOVWF  22
+07B4:  MOVFF  1D,23
+07B8:  RCALL  00EA
+07BA:  BRA    07BC
+....................    } 
+.................... } 
+07BC:  RETLW  00
+....................  
+.................... char lcd_getc( BYTE x, BYTE y) { 
+....................    char value; 
+....................  
+....................     lcd_gotoxy(x,y); 
+....................     while ( bit_test(lcd_read_byte(),7) ); // wait until busy flag is low 
+....................     lcd.rs=1; 
+....................     value = lcd_read_byte(); 
+....................     lcd.rs=0; 
+....................     return(value); 
+.................... } 
+....................  
+.................... #define LCD_DATO 1 
+.................... #define LCD_COMANDO 0               //comandos para lcd 
+.................... #define LCD_CLEAR 0x01 
+.................... #define LCD_HOME 0x02 
+....................  
+....................  
+.................... int32 fosc = 2000000; 
+....................  
+.................... //Definimos el nombre para los pulsos echo y triigger y se asocian a sus correspondientes pines. 
+.................... #define P_ECHO1 PIN_D1 
+.................... #define P_TRIG1 PIN_D0 
+....................  
+.................... #define P_ECHO2 PIN_D3 
+.................... #define P_TRIG2 PIN_D2 
+....................  
+.................... #define P_ALARMA PIN_C5 
+....................  
+.................... #define P_FRENO PIN_C6 
+....................  
+.................... #define INTERMITENTES PIN_C7 
+....................  
+.................... #define P_MOTOR PIN_C0 
+....................  
+.................... #include <HCSR04_1.c> 
+....................  
+....................  
+.................... void HCSR04_1_init(void) 
+.................... {   
+....................    setup_timer_1(T1_INTERNAL | T1_DIV_BY_8);  
+*
+00A8:  MOVLW  B5
+00AA:  MOVWF  FCD
+.................... } 
+00AC:  GOTO   0162 (RETURN)
+....................  
+.................... float HCSR04_1_get_distance(void) 
+.................... { 
+*
+0440:  CLRF   11
+0442:  CLRF   10
+0444:  CLRF   15
+0446:  CLRF   14
+0448:  CLRF   13
+044A:  CLRF   12
+044C:  CLRF   19
+044E:  CLRF   18
+0450:  CLRF   17
+0452:  CLRF   16
+....................    int16 tiempo_eco=0; 
+....................    float distancia=0; 
+....................    float tick = 0; 
+....................    tick = (4000.0 / fosc) * 8.0; 
+0454:  MOVFF  07,1D
+0458:  MOVFF  06,1C
+045C:  MOVFF  05,1B
+0460:  MOVFF  04,1A
+0464:  RCALL  018A
+0466:  CLRF   1D
+0468:  CLRF   1C
+046A:  MOVLW  7A
+046C:  MOVWF  1B
+046E:  MOVLW  8A
+0470:  MOVWF  1A
+0472:  MOVFF  03,21
+0476:  MOVFF  02,20
+047A:  MOVFF  01,1F
+047E:  MOVFF  00,1E
+0482:  RCALL  01BE
+0484:  MOVFF  00,1A
+0488:  MOVFF  01,1B
+048C:  MOVFF  02,1C
+0490:  MOVFF  03,1D
+0494:  MOVFF  03,21
+0498:  MOVFF  02,20
+049C:  MOVFF  01,1F
+04A0:  MOVFF  00,1E
+04A4:  CLRF   25
+04A6:  CLRF   24
+04A8:  CLRF   23
+04AA:  MOVLW  82
+04AC:  MOVWF  22
+04AE:  RCALL  0318
+04B0:  MOVFF  03,19
+04B4:  MOVFF  02,18
+04B8:  MOVFF  01,17
+04BC:  MOVFF  00,16
+....................    output_high(P_TRIG1);  
+04C0:  BCF    F95.0
+04C2:  BSF    F8C.0
+....................    delay_us(10); 
+04C4:  BRA    04C6
+04C6:  BRA    04C8
+04C8:  NOP   
+....................    output_low(P_TRIG1); 
+04CA:  BCF    F95.0
+04CC:  BCF    F8C.0
+....................    while(!input_state(P_ECHO1)){ 
+04CE:  BTFSC  F83.1
+04D0:  BRA    04D4
+....................    }  
+04D2:  BRA    04CE
+....................    set_timer1(0);  
+04D4:  CLRF   FCF
+04D6:  CLRF   FCE
+....................    while(input_state(P_ECHO1)){ 
+04D8:  BTFSS  F83.1
+04DA:  BRA    04DE
+....................    }  
+04DC:  BRA    04D8
+....................    tiempo_eco = get_timer1(); 
+04DE:  MOVF   FCE,W
+04E0:  MOVWF  10
+04E2:  MOVFF  FCF,11
+....................    distancia = (tiempo_eco/2.0)*tick*34.0; 
+04E6:  MOVFF  11,1B
+04EA:  MOVFF  10,1A
+04EE:  RCALL  040A
+04F0:  MOVFF  03,1D
+04F4:  MOVFF  02,1C
+04F8:  MOVFF  01,1B
+04FC:  MOVFF  00,1A
+0500:  CLRF   21
+0502:  CLRF   20
+0504:  CLRF   1F
+0506:  MOVLW  80
+0508:  MOVWF  1E
+050A:  RCALL  01BE
+050C:  MOVFF  00,1A
+0510:  MOVFF  01,1B
+0514:  MOVFF  02,1C
+0518:  MOVFF  03,1D
+051C:  MOVFF  03,21
+0520:  MOVFF  02,20
+0524:  MOVFF  01,1F
+0528:  MOVFF  00,1E
+052C:  MOVFF  19,25
+0530:  MOVFF  18,24
+0534:  MOVFF  17,23
+0538:  MOVFF  16,22
+053C:  RCALL  0318
+053E:  MOVFF  00,1A
+0542:  MOVFF  01,1B
+0546:  MOVFF  02,1C
+054A:  MOVFF  03,1D
+054E:  MOVFF  03,21
+0552:  MOVFF  02,20
+0556:  MOVFF  01,1F
+055A:  MOVFF  00,1E
+055E:  CLRF   25
+0560:  CLRF   24
+0562:  MOVLW  08
+0564:  MOVWF  23
+0566:  MOVLW  84
+0568:  MOVWF  22
+056A:  RCALL  0318
+056C:  MOVFF  03,15
+0570:  MOVFF  02,14
+0574:  MOVFF  01,13
+0578:  MOVFF  00,12
+....................    return distancia; 
+057C:  MOVFF  12,00
+0580:  MOVFF  13,01
+0584:  MOVFF  14,02
+0588:  MOVFF  15,03
+.................... } 
+058C:  GOTO   0CC0 (RETURN)
+....................  
+.................... #include <HCSR04_2.c>         //Librerias de los sensores 
+....................  
+.................... void HCSR04_2_init(void) 
+.................... {   
+....................    setup_timer_3(T3_INTERNAL | T3_DIV_BY_8);  
+*
+00B0:  MOVLW  B5
+00B2:  MOVWF  FB1
+.................... } 
+00B4:  GOTO   0164 (RETURN)
+....................  
+.................... float HCSR04_2_get_distance(void) 
+.................... { 
+*
+0590:  CLRF   11
+0592:  CLRF   10
+0594:  CLRF   15
+0596:  CLRF   14
+0598:  CLRF   13
+059A:  CLRF   12
+059C:  CLRF   19
+059E:  CLRF   18
+05A0:  CLRF   17
+05A2:  CLRF   16
+....................    int16 tiempo_eco=0; 
+....................    float distancia=0; 
+....................    float tick = 0; 
+....................    tick = (4000.0 / fosc) * 8.0; 
+05A4:  MOVFF  07,1D
+05A8:  MOVFF  06,1C
+05AC:  MOVFF  05,1B
+05B0:  MOVFF  04,1A
+05B4:  RCALL  018A
+05B6:  CLRF   1D
+05B8:  CLRF   1C
+05BA:  MOVLW  7A
+05BC:  MOVWF  1B
+05BE:  MOVLW  8A
+05C0:  MOVWF  1A
+05C2:  MOVFF  03,21
+05C6:  MOVFF  02,20
+05CA:  MOVFF  01,1F
+05CE:  MOVFF  00,1E
+05D2:  RCALL  01BE
+05D4:  MOVFF  00,1A
+05D8:  MOVFF  01,1B
+05DC:  MOVFF  02,1C
+05E0:  MOVFF  03,1D
+05E4:  MOVFF  03,21
+05E8:  MOVFF  02,20
+05EC:  MOVFF  01,1F
+05F0:  MOVFF  00,1E
+05F4:  CLRF   25
+05F6:  CLRF   24
+05F8:  CLRF   23
+05FA:  MOVLW  82
+05FC:  MOVWF  22
+05FE:  RCALL  0318
+0600:  MOVFF  03,19
+0604:  MOVFF  02,18
+0608:  MOVFF  01,17
+060C:  MOVFF  00,16
+....................    output_high(P_TRIG2);  
+0610:  BCF    F95.2
+0612:  BSF    F8C.2
+....................    delay_us(10); 
+0614:  BRA    0616
+0616:  BRA    0618
+0618:  NOP   
+....................    output_low(P_TRIG2); 
+061A:  BCF    F95.2
+061C:  BCF    F8C.2
+....................    while(!input_state(P_ECHO2)){ 
+061E:  BTFSC  F83.3
+0620:  BRA    0624
+....................    }  
+0622:  BRA    061E
+....................    set_timer3(0);  
+0624:  CLRF   FB3
+0626:  CLRF   FB2
+....................    while(input_state(P_ECHO2)){ 
+0628:  BTFSS  F83.3
+062A:  BRA    062E
+....................    }  
+062C:  BRA    0628
+....................    tiempo_eco = get_timer3(); 
+062E:  MOVF   FB2,W
+0630:  MOVWF  10
+0632:  MOVFF  FB3,11
+....................    distancia = (tiempo_eco/2.0)*tick*34.0; 
+0636:  MOVFF  11,1B
+063A:  MOVFF  10,1A
+063E:  RCALL  040A
+0640:  MOVFF  03,1D
+0644:  MOVFF  02,1C
+0648:  MOVFF  01,1B
+064C:  MOVFF  00,1A
+0650:  CLRF   21
+0652:  CLRF   20
+0654:  CLRF   1F
+0656:  MOVLW  80
+0658:  MOVWF  1E
+065A:  RCALL  01BE
+065C:  MOVFF  00,1A
+0660:  MOVFF  01,1B
+0664:  MOVFF  02,1C
+0668:  MOVFF  03,1D
+066C:  MOVFF  03,21
+0670:  MOVFF  02,20
+0674:  MOVFF  01,1F
+0678:  MOVFF  00,1E
+067C:  MOVFF  19,25
+0680:  MOVFF  18,24
+0684:  MOVFF  17,23
+0688:  MOVFF  16,22
+068C:  RCALL  0318
+068E:  MOVFF  00,1A
+0692:  MOVFF  01,1B
+0696:  MOVFF  02,1C
+069A:  MOVFF  03,1D
+069E:  MOVFF  03,21
+06A2:  MOVFF  02,20
+06A6:  MOVFF  01,1F
+06AA:  MOVFF  00,1E
+06AE:  CLRF   25
+06B0:  CLRF   24
+06B2:  MOVLW  08
+06B4:  MOVWF  23
+06B6:  MOVLW  84
+06B8:  MOVWF  22
+06BA:  RCALL  0318
+06BC:  MOVFF  03,15
+06C0:  MOVFF  02,14
+06C4:  MOVFF  01,13
+06C8:  MOVFF  00,12
+....................    return distancia; 
+06CC:  MOVFF  12,00
+06D0:  MOVFF  13,01
+06D4:  MOVFF  14,02
+06D8:  MOVFF  15,03
+.................... } 
+06DC:  GOTO   0CD2 (RETURN)
+....................  
+....................  
+....................  
+....................  
+....................  
+....................  
+....................  
+.................... float distancia_delantera = 0, distancia_trasera = 0; 
+....................  
+.................... void inicializar() { 
+....................     output_C(0); 
+*
+0158:  CLRF   F94
+015A:  CLRF   F8B
+....................     output_B(0); 
+015C:  CLRF   F93
+015E:  CLRF   F8A
+....................     HCSR04_1_init(); 
+0160:  BRA    00A8
+....................     HCSR04_2_init(); 
+0162:  BRA    00B0
+....................     setup_adc(adc_clock_div_2); 
+0164:  BCF    FC0.0
+0166:  BCF    FC0.1
+0168:  BCF    FC0.2
+016A:  BSF    FC0.7
+016C:  BSF    FC2.0
+....................     set_adc_channel(0); 
+016E:  MOVLW  00
+0170:  MOVWF  01
+0172:  MOVF   FC2,W
+0174:  ANDLW  C3
+0176:  IORWF  01,W
+0178:  MOVWF  FC2
+....................     delay_us(10); 
+017A:  BRA    017C
+017C:  BRA    017E
+017E:  NOP   
+....................     lcd_init(); 
+0180:  BRA    011A
+....................     output_low(INTERMITENTES); 
+0182:  BCF    F94.7
+0184:  BCF    F8B.7
+.................... } 
+0186:  GOTO   0CBC (RETURN)
+....................  
+....................  
+.................... void controlarMotores() { 
+....................     if (distancia_delantera < 30 && distancia_trasera > 30) { //Si hay peligro de colisión delantera 
+*
+07DE:  MOVFF  0B,15
+07E2:  MOVFF  0A,14
+07E6:  MOVFF  09,13
+07EA:  MOVFF  08,12
+07EE:  CLRF   19
+07F0:  CLRF   18
+07F2:  MOVLW  70
+07F4:  MOVWF  17
+07F6:  MOVLW  83
+07F8:  MOVWF  16
+07FA:  RCALL  06E0
+07FC:  BNC   086C
+07FE:  CLRF   15
+0800:  CLRF   14
+0802:  MOVLW  70
+0804:  MOVWF  13
+0806:  MOVLW  83
+0808:  MOVWF  12
+080A:  MOVFF  0F,19
+080E:  MOVFF  0E,18
+0812:  MOVFF  0D,17
+0816:  MOVFF  0C,16
+081A:  RCALL  06E0
+081C:  BNC   086C
+....................         output_low(P_MOTOR); 
+081E:  BCF    F94.0
+0820:  BCF    F8B.0
+....................         output_high(P_FRENO); 
+0822:  BCF    F94.6
+0824:  BSF    F8B.6
+....................         output_high(P_ALARMA); 
+0826:  BCF    F94.5
+0828:  BSF    F8B.5
+....................         int i; 
+....................         lcd_send_byte(LCD_COMANDO, LCD_CLEAR); 
+082A:  CLRF   22
+082C:  MOVLW  01
+082E:  MOVWF  23
+0830:  RCALL  00EA
+....................         printf(lcd_putc, "Posible colision \ndelantera!"); 
+0832:  MOVLW  18
+0834:  MOVWF  FF6
+0836:  MOVLW  00
+0838:  MOVWF  FF7
+083A:  RCALL  07BE
+....................         delay_ms(1000); 
+083C:  MOVLW  04
+083E:  MOVWF  12
+0840:  MOVLW  FA
+0842:  MOVWF  24
+0844:  RCALL  00B8
+0846:  DECFSZ 12,F
+0848:  BRA    0840
+....................         for (i=0;i<6;i++){                  // Bucle para encender los intermitentes 
+084A:  CLRF   10
+084C:  MOVF   10,W
+084E:  SUBLW  05
+0850:  BNC   086A
+....................         output_high(INTERMITENTES); 
+0852:  BCF    F94.7
+0854:  BSF    F8B.7
+....................         delay_ms(250); 
+0856:  MOVLW  FA
+0858:  MOVWF  24
+085A:  RCALL  00B8
+....................         output_low(INTERMITENTES); 
+085C:  BCF    F94.7
+085E:  BCF    F8B.7
+....................         delay_ms(250); 
+0860:  MOVLW  FA
+0862:  MOVWF  24
+0864:  RCALL  00B8
+....................         } 
+0866:  INCF   10,F
+0868:  BRA    084C
+....................     } else if (distancia_trasera < 30 && distancia_delantera > 30) { // Si hay peligro de colisión trasera 
+086A:  BRA    097E
+086C:  MOVFF  0F,15
+0870:  MOVFF  0E,14
+0874:  MOVFF  0D,13
+0878:  MOVFF  0C,12
+087C:  CLRF   19
+087E:  CLRF   18
+0880:  MOVLW  70
+0882:  MOVWF  17
+0884:  MOVLW  83
+0886:  MOVWF  16
+0888:  RCALL  06E0
+088A:  BNC   08DC
+088C:  CLRF   15
+088E:  CLRF   14
+0890:  MOVLW  70
+0892:  MOVWF  13
+0894:  MOVLW  83
+0896:  MOVWF  12
+0898:  MOVFF  0B,19
+089C:  MOVFF  0A,18
+08A0:  MOVFF  09,17
+08A4:  MOVFF  08,16
+08A8:  RCALL  06E0
+08AA:  BNC   08DC
+....................         output_high(P_MOTOR); 
+08AC:  BCF    F94.0
+08AE:  BSF    F8B.0
+....................         output_low(P_FRENO); 
+08B0:  BCF    F94.6
+08B2:  BCF    F8B.6
+....................         output_high(P_ALARMA); 
+08B4:  BCF    F94.5
+08B6:  BSF    F8B.5
+....................         lcd_send_byte(LCD_COMANDO, LCD_CLEAR); 
+08B8:  CLRF   22
+08BA:  MOVLW  01
+08BC:  MOVWF  23
+08BE:  RCALL  00EA
+....................         printf(lcd_putc, "Posible colision \ntrasera!"); 
+08C0:  MOVLW  36
+08C2:  MOVWF  FF6
+08C4:  MOVLW  00
+08C6:  MOVWF  FF7
+08C8:  RCALL  07BE
+....................         delay_ms(1000); 
+08CA:  MOVLW  04
+08CC:  MOVWF  12
+08CE:  MOVLW  FA
+08D0:  MOVWF  24
+08D2:  CALL   00B8
+08D6:  DECFSZ 12,F
+08D8:  BRA    08CE
+....................     } else if (distancia_delantera < 30 && distancia_trasera < 30) { // Si hay peligro de colisión trasera y delantera 
+08DA:  BRA    097E
+08DC:  MOVFF  0B,15
+08E0:  MOVFF  0A,14
+08E4:  MOVFF  09,13
+08E8:  MOVFF  08,12
+08EC:  CLRF   19
+08EE:  CLRF   18
+08F0:  MOVLW  70
+08F2:  MOVWF  17
+08F4:  MOVLW  83
+08F6:  MOVWF  16
+08F8:  RCALL  06E0
+08FA:  BNC   0972
+08FC:  MOVFF  0F,15
+0900:  MOVFF  0E,14
+0904:  MOVFF  0D,13
+0908:  MOVFF  0C,12
+090C:  CLRF   19
+090E:  CLRF   18
+0910:  MOVLW  70
+0912:  MOVWF  17
+0914:  MOVLW  83
+0916:  MOVWF  16
+0918:  RCALL  06E0
+091A:  BNC   0972
+....................         output_low(P_MOTOR); 
+091C:  BCF    F94.0
+091E:  BCF    F8B.0
+....................         output_high(P_FRENO); 
+0920:  BCF    F94.6
+0922:  BSF    F8B.6
+....................         output_high(P_ALARMA); 
+0924:  BCF    F94.5
+0926:  BSF    F8B.5
+....................         lcd_send_byte(LCD_COMANDO, LCD_CLEAR); 
+0928:  CLRF   22
+092A:  MOVLW  01
+092C:  MOVWF  23
+092E:  CALL   00EA
+....................         printf(lcd_putc, "Peligro por \nretencion!"); 
+0932:  MOVLW  52
+0934:  MOVWF  FF6
+0936:  MOVLW  00
+0938:  MOVWF  FF7
+093A:  RCALL  07BE
+....................         delay_ms(1000); 
+093C:  MOVLW  04
+093E:  MOVWF  12
+0940:  MOVLW  FA
+0942:  MOVWF  24
+0944:  CALL   00B8
+0948:  DECFSZ 12,F
+094A:  BRA    0940
+....................         int i; 
+....................         for (i=0;i<6;i++){ 
+094C:  CLRF   11
+094E:  MOVF   11,W
+0950:  SUBLW  05
+0952:  BNC   0970
+....................         output_high(INTERMITENTES); 
+0954:  BCF    F94.7
+0956:  BSF    F8B.7
+....................         delay_ms(250); 
+0958:  MOVLW  FA
+095A:  MOVWF  24
+095C:  CALL   00B8
+....................         output_low(INTERMITENTES); 
+0960:  BCF    F94.7
+0962:  BCF    F8B.7
+....................         delay_ms(250); 
+0964:  MOVLW  FA
+0966:  MOVWF  24
+0968:  CALL   00B8
+....................         } 
+096C:  INCF   11,F
+096E:  BRA    094E
+....................     } else {                                // Si no hay peligro de colisión 
+0970:  BRA    097E
+....................         output_high(P_MOTOR); 
+0972:  BCF    F94.0
+0974:  BSF    F8B.0
+....................         output_low(P_FRENO); 
+0976:  BCF    F94.6
+0978:  BCF    F8B.6
+....................         output_low(P_ALARMA); 
+097A:  BCF    F94.5
+097C:  BCF    F8B.5
+....................     } 
+.................... } 
+097E:  GOTO   0CE4 (RETURN)
+....................  
+.................... void mostrarDistancias() { 
+....................     lcd_send_byte(LCD_COMANDO, LCD_CLEAR); 
+*
+0BE6:  CLRF   22
+0BE8:  MOVLW  01
+0BEA:  MOVWF  23
+0BEC:  CALL   00EA
+....................     printf(lcd_putc, "Sensor Delantero\nDist: %0.2f m", distancia_delantera); 
+0BF0:  MOVLW  6A
+0BF2:  MOVWF  FF6
+0BF4:  MOVLW  00
+0BF6:  MOVWF  FF7
+0BF8:  MOVLW  17
+0BFA:  MOVWF  10
+0BFC:  RCALL  0982
+0BFE:  MOVLW  C9
+0C00:  MOVWF  FE9
+0C02:  MOVFF  0B,13
+0C06:  MOVFF  0A,12
+0C0A:  MOVFF  09,11
+0C0E:  MOVFF  08,10
+0C12:  MOVLW  02
+0C14:  MOVWF  14
+0C16:  RCALL  0A6E
+0C18:  MOVLW  20
+0C1A:  MOVWF  1D
+0C1C:  RCALL  077A
+0C1E:  MOVLW  6D
+0C20:  MOVWF  1D
+0C22:  RCALL  077A
+....................     delay_ms(1000); 
+0C24:  MOVLW  04
+0C26:  MOVWF  10
+0C28:  MOVLW  FA
+0C2A:  MOVWF  24
+0C2C:  CALL   00B8
+0C30:  DECFSZ 10,F
+0C32:  BRA    0C28
+....................     lcd_send_byte(LCD_COMANDO, LCD_CLEAR); 
+0C34:  CLRF   22
+0C36:  MOVLW  01
+0C38:  MOVWF  23
+0C3A:  CALL   00EA
+....................     printf(lcd_putc, "Sensor Trasero\nDist: %0.2f m", distancia_trasera); 
+0C3E:  MOVLW  8A
+0C40:  MOVWF  FF6
+0C42:  MOVLW  00
+0C44:  MOVWF  FF7
+0C46:  MOVLW  15
+0C48:  MOVWF  10
+0C4A:  RCALL  0982
+0C4C:  MOVLW  C9
+0C4E:  MOVWF  FE9
+0C50:  MOVFF  0F,13
+0C54:  MOVFF  0E,12
+0C58:  MOVFF  0D,11
+0C5C:  MOVFF  0C,10
+0C60:  MOVLW  02
+0C62:  MOVWF  14
+0C64:  RCALL  0A6E
+0C66:  MOVLW  20
+0C68:  MOVWF  1D
+0C6A:  RCALL  077A
+0C6C:  MOVLW  6D
+0C6E:  MOVWF  1D
+0C70:  RCALL  077A
+....................     delay_ms(1000); 
+0C72:  MOVLW  04
+0C74:  MOVWF  10
+0C76:  MOVLW  FA
+0C78:  MOVWF  24
+0C7A:  CALL   00B8
+0C7E:  DECFSZ 10,F
+0C80:  BRA    0C76
+.................... } 
+0C82:  GOTO   0CE6 (RETURN)
+....................  
+.................... void main() { 
+0C86:  CLRF   FF8
+0C88:  BCF    FD0.7
+0C8A:  CLRF   FEA
+0C8C:  CLRF   FE9
+0C8E:  CLRF   07
+0C90:  MOVLW  1E
+0C92:  MOVWF  06
+0C94:  MOVLW  84
+0C96:  MOVWF  05
+0C98:  MOVLW  80
+0C9A:  MOVWF  04
+0C9C:  CLRF   0B
+0C9E:  CLRF   0A
+0CA0:  CLRF   09
+0CA2:  CLRF   08
+0CA4:  CLRF   0F
+0CA6:  CLRF   0E
+0CA8:  CLRF   0D
+0CAA:  CLRF   0C
+0CAC:  MOVF   FC1,W
+0CAE:  ANDLW  C0
+0CB0:  IORLW  0F
+0CB2:  MOVWF  FC1
+0CB4:  MOVLW  07
+0CB6:  MOVWF  FB4
+....................     inicializar(); 
+0CB8:  GOTO   0158
+....................  
+....................     while (true) { 
+....................         distancia_delantera = HCSR04_1_get_distance(); 
+0CBC:  GOTO   0440
+0CC0:  MOVFF  03,0B
+0CC4:  MOVFF  02,0A
+0CC8:  MOVFF  01,09
+0CCC:  MOVFF  00,08
+....................         distancia_trasera = HCSR04_2_get_distance(); 
+0CD0:  BRA    0590
+0CD2:  MOVFF  03,0F
+0CD6:  MOVFF  02,0E
+0CDA:  MOVFF  01,0D
+0CDE:  MOVFF  00,0C
+....................         controlarMotores(); 
+0CE2:  BRA    07DE
+....................         mostrarDistancias();} 
+0CE4:  BRA    0BE6
+0CE6:  BRA    0CBC
+....................     } 
+....................  
+0CE8:  SLEEP 
+
+Configuration Fuses:
+   Word  1: CC3F   PLL12 CPUDIV4 USBDIV HS FCMEN IESO
+   Word  2: 1C3F   NOPUT BROWNOUT BORV20 VREGEN NOWDT WDT16384
+   Word  3: 8700   CCP2C1 PBADEN LPT1OSC MCLR
+   Word  4: 00A1   STVREN NOLVP ICPRT NOXINST NODEBUG
+   Word  5: C00F   NOPROTECT NOCPB NOCPD
+   Word  6: E00F   NOWRT NOWRTC NOWRTB NOWRTD
+   Word  7: 400F   NOEBTR NOEBTRB

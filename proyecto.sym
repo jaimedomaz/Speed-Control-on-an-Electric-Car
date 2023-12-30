@@ -1,0 +1,170 @@
+000     @SCRATCH
+001     @SCRATCH
+001     _RETURN_
+002     @SCRATCH
+003     @SCRATCH
+004-007 fosc
+008-00B distancia_delantera
+00C-00F distancia_trasera
+010     i
+010-011 HCSR04_2_get_distance.tiempo_eco
+010     @PSTRINGCN_92.P1
+010-013 @PRINTF_L32D_92FPFPF.P2
+010-011 HCSR04_1_get_distance.tiempo_eco
+010     lcd_init.i
+010     mostrarDistancias.@SCRATCH1
+011     i
+011     lcd_init.@SCRATCH1
+011     @PSTRINGCN_92.@SCRATCH1
+012-015 @FLT.P1
+012-015 HCSR04_2_get_distance.distancia
+012-015 HCSR04_1_get_distance.distancia
+012     controlarMotores.@SCRATCH1
+012     @PSTRINGC_92.@SCRATCH1
+012     @PSTRINGCN_92.@SCRATCH2
+013     @PSTRINGC_92.@SCRATCH2
+014     @PRINTF_L32D_92FPFPF.P1
+015     @PRINTF_L32D_92FPFPF.@SCRATCH1
+016-019 HCSR04_2_get_distance.tick
+016-019 @FLT.P1
+016-019 HCSR04_1_get_distance.tick
+016     @PRINTF_L32D_92FPFPF.@SCRATCH2
+017     @PRINTF_L32D_92FPFPF.@SCRATCH3
+018     @PRINTF_L32D_92FPFPF.@SCRATCH4
+019     @PRINTF_L32D_92FPFPF.@SCRATCH5
+01A-01D @DIVFF.P1
+01A-01D @DTOF.P2
+01A-01B @ITOF.P3
+01A     HCSR04_1_get_distance.@SCRATCH1
+01A     HCSR04_2_get_distance.@SCRATCH1
+01A     @FLT.@SCRATCH1
+01A     @PRINTF_L32D_92FPFPF.@SCRATCH6
+01B     HCSR04_1_get_distance.@SCRATCH2
+01B     HCSR04_2_get_distance.@SCRATCH2
+01B     @FLT.@SCRATCH2
+01B     @PRINTF_L32D_92FPFPF.@SCRATCH7
+01C     HCSR04_1_get_distance.@SCRATCH3
+01C     HCSR04_2_get_distance.@SCRATCH3
+01C     @PRINTF_L32D_92FPFPF.@SCRATCH8
+01D-020 @FTOSD.P1
+01D-020 @DIV3232.P2
+01D     lcd_putc.c
+01D     HCSR04_1_get_distance.@SCRATCH4
+01D     HCSR04_2_get_distance.@SCRATCH4
+01E-021 @DIVFF.P1
+01E-021 @MULFF.P2
+01E     lcd_gotoxy.x
+01F     lcd_gotoxy.y
+020     lcd_gotoxy.address
+021-024 @DIV3232.P1
+021     lcd_gotoxy.@SCRATCH1
+021     @FTOSD.@SCRATCH1
+022     lcd_send_byte.address
+022-025 @MULFF.P1
+022     @DIVFF.@SCRATCH1
+023     lcd_send_byte.n
+023     @DIVFF.@SCRATCH2
+024     @delay_ms1.P1
+024     lcd_send_byte.@SCRATCH1
+024     @DIVFF.@SCRATCH3
+025     lcd_send_nibble.n
+025     @DIVFF.@SCRATCH4
+025     @DIV3232.@SCRATCH1
+026     @DIVFF.@SCRATCH5
+026     @MULFF.@SCRATCH1
+026     @DIV3232.@SCRATCH2
+027     @DIVFF.@SCRATCH6
+027     @MULFF.@SCRATCH2
+027     @DIV3232.@SCRATCH3
+028     @MULFF.@SCRATCH3
+028     @DIV3232.@SCRATCH4
+029     @DIV3232.@SCRATCH5
+F81     lcd
+F83     PSP_DATA
+FB4.6   C1OUT
+FB4.7   C2OUT
+FBB     CCP_2_LOW
+FBB     CCP_2
+FBC     CCP_2_HIGH
+FBE     CCP_1
+FBE     CCP_1_LOW
+FBF     CCP_1_HIGH
+FE1-FE2 @READ_PACKED_MEMORY.P1
+FE1-FE2 @WRITE_PACKED_MEMORY.P2
+FE9-FEA @WRITE_PROGRAM_MEMORY.P1
+FE9-FEA @READ_PROGRAM_MEMORY.P2
+FE9-FEA @WRITE_PACKED_MEMORY.P3
+FE9-FEA @READ_PACKED_MEMORY.P4
+FF6-FF8 @WRITE_PROGRAM_MEMORY.P1
+FF6-FF8 @READ_PROGRAM_MEMORY.P2
+
+ROM Allocation:
+00B8  @delay_ms1
+0004  LCD_INIT_STRING
+00D2  lcd_send_nibble
+00EA  lcd_send_byte
+011A  lcd_init
+0756  lcd_gotoxy
+077A  lcd_putc
+00A8  HCSR04_1_init
+0440  HCSR04_1_get_distance
+018A  @DTOF
+01BE  @DIVFF
+0318  @MULFF
+040A  @ITOF
+00B0  HCSR04_2_init
+0590  HCSR04_2_get_distance
+0158  inicializar
+07DE  controlarMotores
+06E0  @FLT
+0018  @const127
+07BE  @PSTRINGC_92
+0036  @const129
+0052  @const130
+0BE6  mostrarDistancias
+006A  @const133
+0982  @PSTRINGCN_92
+09A0  @FTOSD
+09E0  @DIV3232
+0A6E  @PRINTF_L32D_92FPFPF
+008A  @const144
+0C86  MAIN
+0C86  @cinit
+
+
+User Memory space: 
+
+User Memory space: 
+
+Project Directory:
+    C:\Users\jaime\Documents\Proyecto_Jaime\
+
+Project Files:
+    proyecto.c
+    ..\..\..\..\Program Files (x86)\PICC\devices\18F4550.h
+    ..\..\..\..\Program Files (x86)\PICC\drivers\ctype.h
+    LCDeasy.c
+    HCSR04_1.c
+    HCSR04_2.c
+
+Units:
+    C:\Users\jaime\Documents\Proyecto_Jaime\proyecto (main)
+
+Compiler Settings:
+    Processor:      PIC18F4550
+    Pointer Size:   16
+    ADC Range:      0-1023
+    Opt Level:      9
+    Short,Int,Long: UNSIGNED: 1,8,16
+    Float,Double:   32,32
+
+Output Files:
+    Errors:      proyecto.err
+    Ext Symbols: proyecto.esym
+    INHX32:      proyecto.hex
+    Symbols:     proyecto.sym
+    List:        proyecto.lst
+    Debug/COFF:  proyecto.cof
+    Project:     proyecto.PJT
+    Call Tree:   proyecto.tre
+    Statistics:  proyecto.sta
